@@ -49,7 +49,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   width: 36px;
   height: 36px;
   border-radius: 9px;
-  object-fit: cover;
+  object-fit: contain;
   background: rgba(255,255,255,0.18);
   padding: 2px;
   flex-shrink: 0;
@@ -223,10 +223,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background-position: center center;
   background-size: contain;
   background-repeat: no-repeat;
-  opacity: 0.12;
+  opacity: 0;
   filter: blur(0.4px);
   pointer-events: none;
   z-index: 0;
+  transition: opacity 0.45s ease;
+}
+.entry-watermark.loaded {
+  opacity: 0.12;
 }
 .header, .container, #installBanner, .modal-overlay { position: relative; z-index: 1; }
 .entry-photo-bottom {
@@ -249,12 +253,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 </head>
 <body>
 {% if entry_photo and entry_photo.mode == 'watermark' and entry_photo.url %}
-<div class="entry-watermark" style="background-image:url('{{ entry_photo.url }}?v={{ entry_photo.version|default(0) }}');"></div>
+<div class="entry-watermark"
+     id="entryWatermark"
+     data-bg="{{ entry_photo.url }}?v={{ entry_photo.version|default(0) }}"></div>
 {% endif %}
 
 <div class="header">
   <div class="header-left">
-    <img src="{{ url_for('static', filename='icons/icon-512.png') }}" class="brand-logo" alt="Brajwasi logo">
+    <img src="{{ url_for('static', filename='icons/icon-192.png') }}"
+         class="brand-logo"
+         alt="Brajwasi logo"
+         width="36"
+         height="36"
+         loading="eager"
+         decoding="async">
     <div>
       <div class="header-title">Brajwasi Travels</div>
       <div class="header-sub">{{ car }} — Daily Entry</div>
@@ -335,7 +347,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   {% if entry_photo and entry_photo.mode == 'bottom' and entry_photo.url %}
   <div class="entry-photo-bottom">
-    <img src="{{ entry_photo.url }}?v={{ entry_photo.version|default(0) }}" alt="Brajwasi entry photo">
+    <img src="{{ entry_photo.url }}?v={{ entry_photo.version|default(0) }}"
+         alt="Brajwasi entry photo"
+         loading="lazy"
+         decoding="async">
   </div>
   {% endif %}
 </div>
@@ -354,6 +369,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
 <script>
 const VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";
+
+// Load watermark after page is ready so the form appears immediately.
+window.addEventListener("load", () => {
+  const wm = document.getElementById("entryWatermark");
+  if (!wm) return;
+  const bg = wm.dataset.bg;
+  if (!bg) return;
+
+  setTimeout(() => {
+    wm.style.backgroundImage = `url("${bg}")`;
+    wm.classList.add("loaded");
+  }, 1000);
+});
 
 // ── Notification button + stable push subscribe ───────────────────────────────
 const notifBtn     = document.getElementById('notifBtn');
@@ -484,18 +512,36 @@ if ('serviceWorker' in navigator) {
 // ── PWA Install ──────────────────────────────────────────────────────────────
 let deferredPrompt = null;
 const installBanner = document.getElementById('installBanner');
+const installBtn = document.getElementById('installBtn');
+
+function isInstalled() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true;
+}
+
+if (isInstalled()) {
+  installBanner.style.display = 'none';
+}
+
 window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault(); deferredPrompt = e;
+  e.preventDefault();
+  if (isInstalled()) return;
+  deferredPrompt = e;
   installBanner.style.display = 'block';
 });
-document.getElementById('installBtn').addEventListener('click', async () => {
+
+installBtn.addEventListener('click', async () => {
   if (!deferredPrompt) return;
   deferredPrompt.prompt();
   const {outcome} = await deferredPrompt.userChoice;
-  if (outcome==='accepted') installBanner.style.display='none';
+  if (outcome === 'accepted') installBanner.style.display = 'none';
   deferredPrompt = null;
 });
-window.addEventListener('appinstalled', () => { installBanner.style.display='none'; });
+
+window.addEventListener('appinstalled', () => {
+  installBanner.style.display = 'none';
+  deferredPrompt = null;
+});
 
 // ── Opening KM auto-fill ─────────────────────────────────────────────────────
 const dateInput   = document.getElementById('entry_date');
@@ -659,14 +705,14 @@ function parseSpokenTime(tokens, rawText) {
   const rawLower = raw.toLowerCase();
 
   const hasPM =
-    rawLower.includes('pm') || rawLower.includes('p.m') ||
+    rawLower.includes('pm') || rawLower.includes('p m') || rawLower.includes('p.m') ||
     rawLower.includes('पीएम') || rawLower.includes('पी एम') ||
     rawLower.includes('shaam') || rawLower.includes('sham') || rawLower.includes('शाम') ||
     rawLower.includes('raat') || rawLower.includes('rat') || rawLower.includes('रात') ||
     rawLower.includes('night');
 
   const hasAM =
-    rawLower.includes('am') || rawLower.includes('a.m') ||
+    rawLower.includes('am') || rawLower.includes('a m') || rawLower.includes('a.m') ||
     rawLower.includes('एएम') || rawLower.includes('ए एम') ||
     rawLower.includes('subah') || rawLower.includes('सुबह') ||
     rawLower.includes('morning') || rawLower.includes('sawere') || rawLower.includes('savere');
@@ -769,13 +815,117 @@ function parseSpeechText(raw, type) {
   return numeric ? numeric.join('') : null;
 }
 
+async function startGroqFallback(btn) {
+  const targetId = btn.dataset.target;
+  const type = btn.dataset.type;
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showStatus('<span class="verror">❌ Voice recording support नहीं मिला.</span>');
+    return;
+  }
+
+  if (activeBtn === btn && window.activeGroqRecorder) {
+    window.activeGroqRecorder.stop();
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' :
+                     (MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '');
+    const recorder = mimeType ? new MediaRecorder(stream, {mimeType}) : new MediaRecorder(stream);
+    const chunks = [];
+
+    window.activeGroqRecorder = recorder;
+    activeBtn = btn;
+    btn.classList.add('recording');
+    btn.textContent = '⏹️';
+    showStatus('🎙️ <b>Recording...</b> iPhone fallback — रोकने के लिए दोबारा टैप करें');
+
+    recorder.ondataavailable = e => {
+      if (e.data && e.data.size > 0) chunks.push(e.data);
+    };
+
+    recorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      window.activeGroqRecorder = null;
+      btn.classList.remove('recording');
+      btn.classList.add('processing');
+      btn.textContent = '⏳';
+      showStatus('⏳ Processing with backup voice...');
+
+      try {
+        const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+        const blob = new Blob(chunks, {type: mimeType || 'audio/webm'});
+        const formData = new FormData();
+        formData.append('audio', blob, 'recording.' + ext);
+
+        const res = await fetch('/transcribe', {method: 'POST', body: formData});
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Backup transcription failed');
+        }
+
+        let parsed = data.parsed || null;
+        const raw = data.raw || '';
+
+        // If backend returned text only, parse locally too.
+        if (!parsed && raw) parsed = parseSpeechText(raw, type);
+
+        if (!parsed) {
+          showStatus(`<span class="verror">❌ समझ नहीं आया — दोबारा बोलें</span><br><small class="raw">"${raw}"</small>`);
+          btn.classList.remove('processing');
+          btn.textContent = '🎤';
+          setTimeout(hideStatus, 4000);
+          return;
+        }
+
+        const field = document.getElementById(targetId);
+        field.value = parsed;
+        field.classList.add('filled');
+        field.dispatchEvent(new Event('input'));
+
+        showStatus(`<span class="vresult">✅ ${parsed}</span> &nbsp;<small class="raw">"${raw}"</small>`);
+        btn.classList.remove('processing');
+        btn.classList.add('success');
+        btn.textContent = '🎤';
+        setTimeout(() => { btn.classList.remove('success'); hideStatus(); }, 3000);
+      } catch(err) {
+        showStatus(`<span class="verror">❌ ${err.message}</span>`);
+        btn.classList.remove('processing');
+        btn.textContent = '🎤';
+        setTimeout(hideStatus, 4500);
+      }
+
+      activeBtn = null;
+    };
+
+    recorder.start();
+
+    // Auto-stop after 8 seconds to avoid large uploads.
+    setTimeout(() => {
+      if (recorder.state === 'recording') recorder.stop();
+    }, 8000);
+
+  } catch(err) {
+    showStatus('<span class="verror">❌ Mic permission allow करें.</span>');
+    btn.textContent = '🎤';
+    setTimeout(hideStatus, 3500);
+  }
+}
+
 function startGoogleVoice(btn) {
   const targetId = btn.dataset.target;
   const type = btn.dataset.type;
+
+  // Android/Desktop Chrome priority: Google Web Speech first.
+  // iPhone/Safari fallback: Groq Whisper via /transcribe.
   if (!SpeechRecognition) {
-    showStatus('<span class="verror">❌ Chrome voice support नहीं मिला. Chrome/Edge browser use करें.</span>');
+    startGroqFallback(btn);
     return;
   }
+
   if (activeRecognition) { activeRecognition.stop(); activeRecognition = null; return; }
 
   const recognition = new SpeechRecognition();
@@ -796,7 +946,7 @@ function startGoogleVoice(btn) {
     }
 
     if (!parsed) {
-      showStatus(`<span class="verror">❌ समझ नहीं आया — दोबारा बोलें</span><br><small class="raw">"${raw}"</small>`);
+      showStatus(`<span class="verror">❌ समझ नहीं आया — backup try करें</span><br><small class="raw">"${raw}"</small>`);
       return;
     }
 
@@ -808,7 +958,17 @@ function startGoogleVoice(btn) {
   };
 
   recognition.onerror = (e) => {
-    showStatus(`<span class="verror">❌ Voice error: ${e.error}. Mic permission allow करें.</span>`);
+    console.log('Google voice error:', e.error);
+    // If Chrome recognition fails, use Groq fallback.
+    activeRecognition = null;
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+    if (['not-allowed', 'service-not-allowed', 'network', 'audio-capture'].includes(e.error)) {
+      startGroqFallback(btn);
+    } else {
+      showStatus(`<span class="verror">❌ Voice error: ${e.error}. दोबारा try करें.</span>`);
+      setTimeout(hideStatus, 3500);
+    }
   };
 
   recognition.onend = () => {

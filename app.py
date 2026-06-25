@@ -187,11 +187,11 @@ def delete_sub(car_key):
     _file_save(subs)
 
 # ---------- Push ----------
-def send_push(sub_info, message, title="Brajwasi Travels 🚗"):
+def send_push(sub_info, message, title="Brajwasi Travels"):
     """Send a single web push notification. Raises WebPushException on failure."""
     webpush(
         subscription_info=sub_info,
-        data=json.dumps({"title": title, "body": message}),
+        data=json.dumps({"title": title, "body": message, "url": "/entry"}),
         vapid_private_key=VAPID_PRIVATE_KEY,
         vapid_claims={"sub": VAPID_EMAIL}
     )

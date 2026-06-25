@@ -1,10 +1,11 @@
-const CACHE_NAME = "brajwasi-v15";
+const CACHE_NAME = "brajwasi-v16";
 
 const ASSETS = [
   "/",
   "/entry",
   "/static/style.css",
   "/static/icons/icon-192.png",
+  "/static/icons/icon-512.png",
   "/manifest.json"
 ];
 
@@ -28,24 +29,37 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   const url = event.request.url;
+
   if (!url.startsWith("http://") && !url.startsWith("https://")) return;
   if (event.request.method !== "GET") return;
 
   event.respondWith(
     fetch(event.request)
       .then(response => {
-        if (response && response.status === 200 && response.type !== "opaque" && url.startsWith(self.location.origin)) {
+        if (
+          response &&
+          response.status === 200 &&
+          response.type !== "opaque" &&
+          url.startsWith(self.location.origin)
+        ) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
         return response;
       })
-      .catch(() => caches.match(event.request).then(cached => cached || caches.match("/")))
+      .catch(() =>
+        caches.match(event.request).then(cached => cached || caches.match("/"))
+      )
   );
 });
 
 self.addEventListener("push", event => {
-  let data = { title: "Brajwasi Travels 🚗", body: "New message from admin", url: "/entry" };
+  let data = {
+    title: "Brajwasi Travels",
+    body: "New message from admin",
+    url: "/entry"
+  };
+
   try {
     if (event.data) data = { ...data, ...event.data.json() };
   } catch(e) {
@@ -53,7 +67,7 @@ self.addEventListener("push", event => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(data.title || "Brajwasi Travels 🚗", {
+    self.registration.showNotification(data.title || "Brajwasi Travels", {
       body: data.body || "New message from admin",
       icon: "/static/icons/icon-192.png",
       badge: "/static/icons/icon-192.png",
@@ -68,11 +82,18 @@ self.addEventListener("push", event => {
 
 self.addEventListener("notificationclick", event => {
   event.notification.close();
-  const targetUrl = event.notification.data && event.notification.data.url ? event.notification.data.url : "/entry";
+
+  const targetUrl =
+    event.notification.data && event.notification.data.url
+      ? event.notification.data.url
+      : "/entry";
+
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
       for (const client of list) {
-        if (client.url.includes(targetUrl) && "focus" in client) return client.focus();
+        if (client.url.includes(targetUrl) && "focus" in client) {
+          return client.focus();
+        }
       }
       if (clients.openWindow) return clients.openWindow(targetUrl);
     })
