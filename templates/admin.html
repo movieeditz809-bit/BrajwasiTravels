@@ -3,115 +3,160 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin – Reset Month</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<title>Admin – Brajwasi</title>
+<style>
+:root { --accent:#1e6ebb; --accent2:#1557a0; --green:#16a34a; --red:#dc2626; --orange:#d97706; --purple:#7c3aed; --text:#1e293b; --muted:#64748b; --border:#bfdbfe; --bg:#e8f4fd; --card:#fff; --input-bg:#f8fbff; --radius:12px; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:40px; }
+.header { background:linear-gradient(135deg,var(--accent),var(--accent2)); padding:16px 18px 14px; box-shadow:0 2px 8px rgba(30,110,187,0.25); }
+.header-title { font-size:1.05rem; font-weight:700; color:#fff; }
+.header-sub { font-size:0.73rem; color:#bfdbfe; margin-top:2px; }
+.container { padding:14px; max-width:480px; margin:0 auto; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px; box-shadow:0 2px 10px rgba(30,110,187,0.08); }
+.card-title { font-size:0.7rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:14px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+label { display:block; font-size:0.78rem; font-weight:600; color:var(--muted); margin-bottom:5px; margin-top:11px; }
+label:first-of-type { margin-top:0; }
+select, input[type=password], textarea { width:100%; background:var(--input-bg); border:1.5px solid var(--border); border-radius:9px; color:var(--text); font-size:0.93rem; padding:10px 12px; font-family:inherit; transition:border-color 0.2s; }
+select:focus, input:focus, textarea:focus { outline:none; border-color:var(--accent); }
+textarea { resize:vertical; min-height:75px; }
+.btn { width:100%; padding:12px; border:none; border-radius:var(--radius); font-size:0.93rem; font-weight:700; cursor:pointer; margin-top:12px; color:#fff; transition:opacity 0.2s; }
+.btn:hover { opacity:0.9; } .btn:disabled { opacity:0.6; cursor:not-allowed; }
+.btn-purple { background:linear-gradient(135deg,var(--purple),#5b21b6); }
+.btn-orange { background:linear-gradient(135deg,var(--orange),#b45309); }
+.msg { border-radius:9px; padding:11px 14px; font-size:0.85rem; margin-bottom:12px; font-weight:500; }
+.success { background:#f0fdf4; border:1px solid #86efac; color:var(--green); }
+.error { background:#fef2f2; border:1px solid #fca5a5; color:var(--red); }
+.subs-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+.sub-tag { background:#f0f8ff; border:1px solid var(--border); border-radius:6px; padding:4px 9px; font-size:0.76rem; color:var(--muted); }
+.sub-tag.active { border-color:#86efac; color:var(--green); background:#f0fdf4; }
+.sub-count { font-size:0.8rem; color:var(--muted); margin-bottom:10px; }
+.back-link { text-align:center; margin-top:14px; }
+.back-link a { color:var(--muted); font-size:0.83rem; text-decoration:none; }
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:999; align-items:center; justify-content:center; }
+.modal-overlay.show { display:flex; }
+.modal-box { background:#fff; border:1px solid var(--border); border-radius:16px; padding:26px 20px; max-width:310px; width:92%; text-align:center; box-shadow:0 8px 28px rgba(30,110,187,0.15); }
+.modal-icon { font-size:2.2rem; margin-bottom:10px; }
+.modal-title { font-size:0.95rem; font-weight:700; color:var(--red); margin-bottom:6px; }
+.modal-sub { font-size:0.82rem; color:var(--muted); margin-bottom:18px; line-height:1.5; }
+.modal-btns { display:flex; gap:9px; }
+.modal-btns button { flex:1; padding:10px; border-radius:9px; border:none; font-size:0.9rem; font-weight:600; cursor:pointer; }
+.btn-confirm { background:var(--red); color:#fff; }
+.btn-cancel { background:#f1f5f9; color:var(--text); }
+
+input[type=file] { width:100%; background:var(--input-bg); border:1.5px dashed var(--border); border-radius:9px; color:var(--text); font-size:0.86rem; padding:10px 12px; font-family:inherit; }
+.radio-row { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+.radio-option { display:flex; align-items:center; gap:8px; background:#f8fbff; border:1px solid var(--border); border-radius:9px; padding:9px 10px; font-size:0.85rem; color:var(--text); }
+.radio-option input { width:auto; }
+.photo-preview { margin-top:10px; border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#f8fbff; }
+.photo-preview img { width:100%; display:block; max-height:180px; object-fit:contain; }
+.small-note { font-size:0.76rem; color:var(--muted); line-height:1.45; margin-top:8px; }
+.btn-green { background:linear-gradient(135deg,var(--green),#15803d); }
+</style>
 </head>
 <body>
+<div class="header">
+  <div class="header-title">⚙️ Admin Panel</div>
+  <div class="header-sub">Brajwasi Travels — Management</div>
+</div>
 <div class="container">
-  <h2>🗓️ Month Reset</h2>
-  <p style="font-size:0.88rem; color:#555; text-align:center; margin-top:-8px;">
-    Updates all sheets: title, dates &amp; clears old entries<br>
-    <span style="font-size:0.83rem;">सभी शीट के dates, title और पुरानी entries अपडेट होंगी</span>
-  </p>
-
-  <form method="post" id="adminForm">
-
-    <label>Month / महीना</label>
-    <select name="month" required style="width:100%; padding:10px; border-radius:8px;
-            border:1.5px solid #ccc; font-size:1rem; margin-bottom:12px;">
-      {% set names = ['January','February','March','April','May','June',
-                      'July','August','September','October','November','December'] %}
-      {% for m in range(1, 13) %}
-        <option value="{{ m }}" {% if m == cur_month %}selected{% endif %}>
-          {{ names[m-1] }}
-        </option>
-      {% endfor %}
-    </select>
-
-    <label>Year / वर्ष</label>
-    <select name="year" required style="width:100%; padding:10px; border-radius:8px;
-            border:1.5px solid #ccc; font-size:1rem; margin-bottom:12px;">
-      {% for y in range(cur_year - 1, cur_year + 3) %}
-        <option value="{{ y }}" {% if y == cur_year %}selected{% endif %}>{{ y }}</option>
-      {% endfor %}
-    </select>
-
-    <label>Admin Code / एडमिन कोड</label>
-    <input name="code" type="password" placeholder="Enter admin code" required>
-
-    <button type="submit" id="submitBtn" style="background:#e67e22;">
-      🔄 Reset Month / महीना रीसेट करें
-    </button>
-
-    {% if msg %}
-    <p class="{{ cls }}" style="text-align:center; margin-top:14px; font-size:0.95rem;">
-      {{ msg }}
-    </p>
-    {% endif %}
-  </form>
-
-  <!-- Confirm Modal -->
-  <div id="confirmModal" style="display:none; position:fixed; top:0; left:0; width:100%;
-       height:100%; background:rgba(0,0,0,0.6); z-index:999;
-       align-items:center; justify-content:center;">
-    <div style="background:#fff; border-radius:14px; padding:28px 22px; max-width:320px;
-                width:90%; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.3);
-                position:relative; top:50%; transform:translateY(-50%); margin:auto;">
-      <div style="font-size:2.2rem; margin-bottom:10px;">⚠️</div>
-      <p style="font-weight:bold; color:#c0392b; margin:0 0 6px;">
-        This will clear ALL entries!
-      </p>
-      <p style="font-weight:bold; color:#c0392b; margin:0 0 14px; font-size:0.95rem;">
-        सभी पुरानी entries डिलीट हो जाएंगी!
-      </p>
-      <p style="font-size:0.88rem; color:#555; margin:0 0 20px;">
-        Are you sure you want to reset the month?<br>
-        क्या आप वाकई महीना रीसेट करना चाहते हैं?
-      </p>
-      <div style="display:flex; gap:10px; justify-content:center;">
-        <button id="confirmYes" style="background:#e74c3c; color:#fff; border:none;
-                padding:10px 16px; border-radius:8px; font-size:0.95rem;
-                cursor:pointer; flex:1;">
-          ✅ Yes / हाँ
-        </button>
-        <button id="confirmNo" style="background:#7f8c8d; color:#fff; border:none;
-                padding:10px 16px; border-radius:8px; font-size:0.95rem;
-                cursor:pointer; flex:1;">
-          ❌ Cancel / रद्द
-        </button>
-      </div>
-    </div>
+{% if msg %}<div class="msg {{ cls }}">{{ msg }}</div>{% endif %}
+<div class="card">
+  <div class="card-title">🔔 Send Push Notification</div>
+  <div class="sub-count">Active subscriptions: <b>{{ subs|length }}</b> driver(s)</div>
+  {% if drivers %}
+  <div class="subs-row">
+    {% for car in drivers %}
+    <span class="sub-tag {% if car in subs %}active{% endif %}">{% if car in subs %}🟢{% else %}⚪{% endif %} {{ car[-4:] }}</span>
+    {% endfor %}
   </div>
-
-  <p style="text-align:center; margin-top:16px;">
-    <a href="/">← Back to Login</a>
-  </p>
+  {% endif %}
+  <form method="post" id="notifyForm">
+    <input type="hidden" name="action" value="notify">
+    <label>Send To</label>
+    <select name="target">
+      <option value="all">📢 All Drivers / सभी</option>
+      {% for car in drivers %}<option value="{{ car }}">{{ car }}</option>{% endfor %}
+    </select>
+    <label>Message / संदेश</label>
+    <textarea name="message" placeholder="Type message... / संदेश लिखें..." required></textarea>
+    <label>Admin Code</label>
+    <input type="password" name="code" placeholder="Admin code" required>
+    <button type="submit" class="btn btn-purple" id="notifyBtn">📤 Send Notification</button>
+  </form>
 </div>
 
+<div class="card">
+  <div class="card-title">🖼️ Entry Page Photo</div>
+  <p class="small-note" style="margin-top:0;margin-bottom:10px;">
+    Upload one photo and choose how drivers see it: light watermark, bottom of entry page, or hidden.
+  </p>
+  {% if entry_photo_settings and entry_photo_settings.url %}
+  <div class="photo-preview">
+    <img src="{{ entry_photo_settings.url }}?v={{ entry_photo_settings.version|default(0) }}" alt="Current entry photo">
+  </div>
+  <p class="small-note">Current mode: <b>{{ entry_photo_settings.mode|default('hide') }}</b></p>
+  {% else %}
+  <p class="small-note">No photo uploaded yet.</p>
+  {% endif %}
+  <form method="post" enctype="multipart/form-data" id="photoForm">
+    <input type="hidden" name="action" value="entry_photo">
+    <label>Upload Photo</label>
+    <input type="file" name="entry_photo" accept="image/png,image/jpeg,image/webp,image/gif">
+    <label>Show Photo As</label>
+    <div class="radio-row">
+      <label class="radio-option"><input type="radio" name="photo_mode" value="watermark" {% if entry_photo_settings and entry_photo_settings.mode=='watermark' %}checked{% endif %}> Light watermark behind entry form</label>
+      <label class="radio-option"><input type="radio" name="photo_mode" value="bottom" {% if entry_photo_settings and entry_photo_settings.mode=='bottom' %}checked{% endif %}> Show at bottom after Save Entry button</label>
+      <label class="radio-option"><input type="radio" name="photo_mode" value="hide" {% if not entry_photo_settings or entry_photo_settings.mode=='hide' %}checked{% endif %}> Hide photo</label>
+    </div>
+    <label>Admin Code</label>
+    <input type="password" name="code" placeholder="Admin code" required>
+    <button type="submit" class="btn btn-green" id="photoBtn">💾 Save Photo Setting</button>
+  </form>
+</div>
+<div class="card">
+  <div class="card-title">🗓️ Month Reset</div>
+  <p style="font-size:0.79rem;color:var(--muted);margin-bottom:12px;line-height:1.5;">Updates title, dates &amp; clears entries in all sheets.<br><span style="font-size:0.75rem;">सभी शीट reset होंगी — पुरानी entries हट जाएंगी।</span></p>
+  <form method="post" id="resetForm">
+    <input type="hidden" name="action" value="reset">
+    {% set names=['January','February','March','April','May','June','July','August','September','October','November','December'] %}
+    <label>Month / महीना</label>
+    <select name="month">
+      {% for m in range(1,13) %}<option value="{{ m }}" {% if m==cur_month %}selected{% endif %}>{{ names[m-1] }}</option>{% endfor %}
+    </select>
+    <label>Year / वर्ष</label>
+    <select name="year">
+      {% for y in range(cur_year-1,cur_year+3) %}<option value="{{ y }}" {% if y==cur_year %}selected{% endif %}>{{ y }}</option>{% endfor %}
+    </select>
+    <label>Admin Code</label>
+    <input type="password" name="code" placeholder="Admin code" required>
+    <button type="submit" class="btn btn-orange" id="resetBtn">🔄 Reset Month</button>
+  </form>
+</div>
+<div class="back-link"><a href="/">← Back to Login</a></div>
+</div>
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <div class="modal-icon">⚠️</div>
+    <div class="modal-title">Clear ALL entries?<br><small>सभी entries डिलीट होंगी!</small></div>
+    <div class="modal-sub">This cannot be undone.<br>क्या आप confirm करना चाहते हैं?</div>
+    <div class="modal-btns">
+      <button class="btn-confirm" id="confirmYes">✅ Yes</button>
+      <button class="btn-cancel" id="confirmNo">❌ Cancel</button>
+    </div>
+  </div>
+</div>
 <script>
-const form = document.getElementById('adminForm');
-const modal = document.getElementById('confirmModal');
-let confirmed = false;
+const resetForm=document.getElementById('resetForm');
+const modal=document.getElementById('confirmModal');
+const resetBtn=document.getElementById('resetBtn');
+let confirmed=false;
+resetForm.addEventListener('submit',function(e){if(confirmed)return;e.preventDefault();modal.classList.add('show');});
+document.getElementById('confirmYes').addEventListener('click',()=>{modal.classList.remove('show');confirmed=true;resetBtn.disabled=true;resetBtn.textContent='⏳ Updating...';resetForm.submit();});
+document.getElementById('confirmNo').addEventListener('click',()=>modal.classList.remove('show'));
+document.getElementById('notifyForm').addEventListener('submit',()=>{const b=document.getElementById('notifyBtn');b.disabled=true;b.textContent='⏳ Sending...';});
+const photoForm=document.getElementById('photoForm');
+if(photoForm){photoForm.addEventListener('submit',()=>{const b=document.getElementById('photoBtn');b.disabled=true;b.textContent='⏳ Saving...';});}
 
-form.addEventListener('submit', function(e) {
-    if (confirmed) return;
-    e.preventDefault();
-    modal.style.display = 'flex';
-});
-
-document.getElementById('confirmYes').addEventListener('click', function() {
-    modal.style.display = 'none';
-    confirmed = true;
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = true;
-    btn.textContent = '⏳ Updating... / अपडेट हो रहा है...';
-    btn.style.background = '#95a5a6';
-    form.submit();
-});
-
-document.getElementById('confirmNo').addEventListener('click', function() {
-    modal.style.display = 'none';
-});
 </script>
 </body>
 </html>

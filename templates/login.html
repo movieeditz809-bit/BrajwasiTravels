@@ -3,72 +3,65 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Driver Login</title>
-
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
-<!-- PWA -->
+<title>Driver Login – Brajwasi</title>
 <link rel="manifest" href="{{ url_for('manifest') }}">
-<meta name="theme-color" content="#0a74da">
+<meta name="theme-color" content="#1e6ebb">
 <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-<div class="container">
-<h2>Driver Login</h2>
-<form method="post">
-    <input name="code" placeholder="Enter your code" required>
-    <button>Login</button>
-    {% if msg %}<p class="error">{{ msg }}</p>{% endif %}
-</form>
+<body class="login-page">
+<div class="login-card">
+  <div class="logo">
+    <img src="{{ url_for('static', filename='icons/icon-192.png') }}"
+         class="login-logo-icon"
+         alt="Brajwasi Travels"
+         width="80"
+         height="80"
+         loading="eager"
+         decoding="async">
+    <h1>Brajwasi Travels</h1>
+    <p>Driver Daily Entry Portal</p>
+  </div>
 
-<!-- PWA Install Banner -->
-<div id="installBanner" style="display:none; margin-top:20px; background:#e8f4fd;
-     border:1.5px solid #0a74da; border-radius:10px; padding:14px 16px; text-align:center;">
-  <p style="margin:0 0 4px; font-weight:bold; color:#0a74da; font-size:0.95rem;">
-    📲 Install App / ऐप इंस्टॉल करें
-  </p>
-  <p style="margin:0 0 10px; font-size:0.82rem; color:#555;">
-    Install for faster access &amp; offline use<br>
-    <span style="font-size:0.8rem;">तेज़ access के लिए ऐप इंस्टॉल करें</span>
-  </p>
-  <button id="installBtn" style="background:#0a74da; color:#fff; border:none;
-          padding:10px 28px; border-radius:8px; font-size:0.95rem; cursor:pointer; width:100%;">
-    ⬇️ Install / इंस्टॉल करें
-  </button>
-</div>
+  <form method="post">
+    <label>Enter Your Code / अपना कोड डालें</label>
+    <input name="code" placeholder="Driver code" required autocomplete="off">
+    <button class="btn" type="submit">Login →</button>
+    {% if msg %}<div class="error">{{ msg }}</div>{% endif %}
+  </form>
+
+  <div id="installBanner">
+    <p>📲 Install App / ऐप इंस्टॉल करें</p>
+    <span>Faster access &amp; offline use</span>
+    <button id="installBtn">⬇️ Install</button>
+  </div>
 </div>
 
 <script>
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
-        .then(() => console.log("Service Worker Registered"))
-        .catch(err => console.log("SW registration failed", err));
+  navigator.serviceWorker.register('/service-worker.js').catch(e => console.log('SW error', e));
 }
 
 let deferredPrompt = null;
-const installBanner = document.getElementById('installBanner');
-const installBtn = document.getElementById('installBtn');
 
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    installBanner.style.display = 'block';
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').style.display = 'block';
 });
 
-installBtn.addEventListener('click', async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-        installBanner.style.display = 'none';
-    }
-    deferredPrompt = null;
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') {
+    document.getElementById('installBanner').style.display = 'none';
+  }
+  deferredPrompt = null;
 });
 
-// Hide if already installed
 window.addEventListener('appinstalled', () => {
-    installBanner.style.display = 'none';
-    deferredPrompt = null;
+  document.getElementById('installBanner').style.display = 'none';
 });
 </script>
 </body>

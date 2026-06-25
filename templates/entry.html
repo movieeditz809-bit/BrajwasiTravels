@@ -3,192 +3,856 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily Entry</title>
-
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
-<!-- PWA -->
+<title>Daily Entry – Brajwasi</title>
 <link rel="manifest" href="{{ url_for('manifest') }}">
-<meta name="theme-color" content="#0a74da">
+<meta name="theme-color" content="#1e6ebb">
 <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
-</head>
+<style>
+:root {
+  --bg: #e8f4fd;
+  --card: #ffffff;
+  --card2: #f0f8ff;
+  --accent: #1e6ebb;
+  --accent2: #1557a0;
+  --accent-light: #dbeafe;
+  --green: #16a34a;
+  --red: #dc2626;
+  --orange: #d97706;
+  --text: #1e293b;
+  --muted: #64748b;
+  --border: #bfdbfe;
+  --border2: #93c5fd;
+  --input-bg: #f8fbff;
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(30,110,187,0.10);
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg); color: var(--text); min-height:100vh; padding-bottom:50px; }
 
+.header {
+  background: linear-gradient(135deg, #1e6ebb 0%, #1557a0 100%);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(30,110,187,0.25);
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.brand-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  object-fit: cover;
+  background: rgba(255,255,255,0.18);
+  padding: 2px;
+  flex-shrink: 0;
+}
+.header-title { font-size: 1.02rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.header-sub   { font-size: 0.72rem; color: #bfdbfe; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  flex-shrink: 0;
+}
+.logout-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  padding: 7px 11px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+/* Header notification button */
+#notifBtn {
+  position: static;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.16);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.28);
+  font-size: 1.05rem;
+  cursor: pointer;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+#notifBtn:hover { background: rgba(255,255,255,0.28); transform: scale(1.04); }
+#notifBtn.granted { background: var(--green); border-color: rgba(255,255,255,0.45); }
+#notifBtn.denied  { background: #94a3b8; border-color: rgba(255,255,255,0.35); }
+#notifTooltip {
+  position: absolute;
+  top: 47px;
+  right: 0;
+  z-index: 101;
+  background: var(--text);
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+#notifBtn:hover + #notifTooltip,
+#notifTooltip.show { opacity: 1; }
+
+/* PWA Install */
+#installBanner {
+  display: none; margin: 12px 14px 0;
+  background: #dbeafe; border: 1.5px solid var(--border2);
+  border-radius: var(--radius); padding: 12px 14px; text-align: center;
+}
+#installBanner p { font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-bottom: 4px; }
+#installBanner span { font-size: 0.78rem; color: var(--muted); }
+#installBtn {
+  margin-top: 8px; width: 100%; background: var(--accent); color: #fff;
+  border: none; padding: 9px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; font-weight: 600;
+}
+
+.container { padding: 14px; max-width: 480px; margin: 0 auto; }
+
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-size: 0.7rem; font-weight: 700; color: var(--accent);
+  text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+
+.field { margin-bottom: 12px; }
+.field:last-child { margin-bottom: 0; }
+.field label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+
+.input-row { display: flex; gap: 7px; align-items: center; }
+.input-row input {
+  flex: 1; background: var(--input-bg); border: 1.5px solid var(--border);
+  border-radius: 9px; color: var(--text); font-size: 0.97rem;
+  padding: 10px 12px; transition: border-color 0.2s;
+}
+.input-row input:focus { outline: none; border-color: var(--accent); background: #fff; }
+.input-row input.filled { border-color: var(--green); background: #f0fdf4; }
+.input-row input[type="date"],
+.input-row input[type="time"] { color-scheme: light; }
+
+/* Mic button */
+.mic-btn {
+  width: 40px; height: 40px; border-radius: 9px;
+  border: 1.5px solid var(--border); background: var(--card2);
+  color: var(--muted); font-size: 1rem; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.mic-btn:hover { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+.mic-btn.recording {
+  background: #fef2f2; border-color: var(--red); color: var(--red);
+  animation: pulse 1s infinite;
+}
+.mic-btn.processing { background: #fffbeb; border-color: var(--orange); color: var(--orange); }
+.mic-btn.success    { background: #f0fdf4; border-color: var(--green); color: var(--green); }
+@keyframes pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.3); }
+  50%      { box-shadow: 0 0 0 5px rgba(220,38,38,0.05); }
+}
+
+#voiceStatus {
+  display: none; margin: 8px 0 2px;
+  background: #f0f8ff; border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 12px; font-size: 0.78rem; color: var(--muted);
+}
+#voiceStatus.show { display: block; }
+.raw    { color: var(--accent); font-style: italic; }
+.vresult { color: var(--green); font-weight: 700; }
+.verror  { color: var(--red); }
+
+.save-btn {
+  width: 100%; padding: 13px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff; border: none; border-radius: var(--radius);
+  font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 2px;
+  box-shadow: 0 3px 10px rgba(30,110,187,0.3); transition: opacity 0.2s;
+}
+.save-btn:hover { opacity: 0.92; }
+.save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.msg { border-radius: 10px; padding: 11px 14px; font-size: 0.87rem; margin-bottom: 12px; font-weight: 500; }
+.success { background: #f0fdf4; border: 1px solid #86efac; color: var(--green); }
+.error   { background: #fef2f2; border: 1px solid #fca5a5; color: var(--red); }
+
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45); z-index: 999;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal-box {
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 16px; padding: 26px 20px; max-width: 310px;
+  width: 92%; text-align: center; box-shadow: 0 8px 32px rgba(30,110,187,0.15);
+}
+.modal-icon  { font-size: 2.2rem; margin-bottom: 10px; }
+.modal-title { font-size: 0.97rem; font-weight: 700; color: var(--red); margin-bottom: 6px; }
+.modal-sub   { font-size: 0.82rem; color: var(--muted); margin-bottom: 18px; line-height: 1.5; }
+.modal-btns  { display: flex; gap: 9px; }
+.modal-btns button { flex:1; padding:10px; border-radius:9px; border:none; font-size:0.9rem; font-weight:600; cursor:pointer; }
+.btn-confirm { background: var(--red); color: #fff; }
+.btn-cancel  { background: #f1f5f9; color: var(--text); }
+
+.entry-watermark {
+  position: fixed;
+  inset: 0;
+  background-position: center center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.12;
+  filter: blur(0.4px);
+  pointer-events: none;
+  z-index: 0;
+}
+.header, .container, #installBanner, .modal-overlay { position: relative; z-index: 1; }
+.entry-photo-bottom {
+  margin-top: 12px;
+  text-align: center;
+  background: rgba(255,255,255,0.88);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  box-shadow: var(--shadow);
+}
+.entry-photo-bottom img {
+  width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+  border-radius: 10px;
+  opacity: 0.92;
+}
+</style>
+</head>
 <body>
-<div class="container">
-<h3>Daily Entry for {{ car }}</h3>
-<form id="entryForm" method="post">
-    <label>Date</label>
-    <input id="entry_date" name="entry_date" type="date" value="{{ today }}" required>
-    <input id="opening" name="opening" placeholder="Opening KM" type="number" required>
-    <input name="closing" placeholder="Closing KM" type="number" required>
-    <label>Start Time</label>
-    <input name="start" type="time" required>
-    <label>End Time</label>
-    <input name="end" type="time" required>
-    <button type="submit">Save</button>
-    {% if msg %}<p class="{{ cls }}">{{ msg }}</p>{% endif %}
-</form>
-<p style="text-align:center;"><a href="/logout">Logout</a></p>
+{% if entry_photo and entry_photo.mode == 'watermark' and entry_photo.url %}
+<div class="entry-watermark" style="background-image:url('{{ entry_photo.url }}?v={{ entry_photo.version|default(0) }}');"></div>
+{% endif %}
+
+<div class="header">
+  <div class="header-left">
+    <img src="{{ url_for('static', filename='icons/icon-512.png') }}" class="brand-logo" alt="Brajwasi logo">
+    <div>
+      <div class="header-title">Brajwasi Travels</div>
+      <div class="header-sub">{{ car }} — Daily Entry</div>
+    </div>
+  </div>
+
+  <div class="header-actions">
+    <button id="notifBtn" title="Notifications">🔔</button>
+    <div id="notifTooltip">Enable notifications</div>
+    <a href="/logout" class="logout-btn">Logout</a>
+  </div>
+</div>
 
 <!-- PWA Install Banner -->
-<div id="installBanner" style="display:none; margin-top:10px; background:#e8f4fd;
-     border:1.5px solid #0a74da; border-radius:10px; padding:14px 16px; text-align:center;">
-  <p style="margin:0 0 4px; font-weight:bold; color:#0a74da; font-size:0.95rem;">
-    📲 Install App / ऐप इंस्टॉल करें
-  </p>
-  <p style="margin:0 0 10px; font-size:0.82rem; color:#555;">
-    Install for faster access &amp; offline use<br>
-    <span style="font-size:0.8rem;">तेज़ access के लिए ऐप इंस्टॉल करें</span>
-  </p>
-  <button id="installBtn" style="background:#0a74da; color:#fff; border:none;
-          padding:10px 28px; border-radius:8px; font-size:0.95rem; cursor:pointer; width:100%;">
-    ⬇️ Install / इंस्टॉल करें
-  </button>
-</div>
+<div id="installBanner">
+  <p>📲 Install App / ऐप इंस्टॉल करें</p>
+  <span>Faster access &amp; works offline</span>
+  <button id="installBtn">⬇️ Install</button>
 </div>
 
-<!-- Confirmation Modal -->
-<div id="confirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-     background:rgba(0,0,0,0.6); z-index:999; align-items:center; justify-content:center;">
-  <div style="background:#fff; border-radius:14px; padding:30px 24px; max-width:340px; width:90%;
-              box-shadow:0 8px 32px rgba(0,0,0,0.3); text-align:center;
-              position:relative; top:50%; transform:translateY(-50%); margin:auto;">
-    <div style="font-size:2.4rem; margin-bottom:12px;">⚠️</div>
-    <p style="font-weight:bold; font-size:1.05rem; color:#c0392b; margin:0 0 4px;">
-      Entry already filled for this date!
-    </p>
-    <p style="font-weight:bold; font-size:1rem; color:#c0392b; margin:0 0 14px;">
-      इस तारीख की एंट्री पहले से भरी हुई है!
-    </p>
-    <p style="font-size:0.9rem; color:#555; margin:0 0 4px;">
-      Do you want to overwrite it?
-    </p>
-    <p style="font-size:0.9rem; color:#555; margin:0 0 22px;">
-      क्या आप इसे बदलना चाहते हैं?
-    </p>
-    <div style="display:flex; gap:12px; justify-content:center;">
-      <button id="confirmBtn" style="background:#e74c3c; color:#fff; border:none;
-              padding:11px 18px; border-radius:8px; font-size:0.95rem; cursor:pointer; flex:1;">
-        ✅ Yes / हाँ
-      </button>
-      <button id="cancelBtn" style="background:#7f8c8d; color:#fff; border:none;
-              padding:11px 18px; border-radius:8px; font-size:0.95rem; cursor:pointer; flex:1;">
-        ❌ Cancel / रद्द करें
-      </button>
+<div class="container">
+
+  {% if msg %}
+  <div class="msg {{ cls }}">{{ msg }}</div>
+  {% endif %}
+
+  <div id="voiceStatus"></div>
+
+  <form id="entryForm" method="post">
+
+    <div class="card">
+      <div class="card-title">📅 Entry Date</div>
+      <div class="field">
+        <div class="input-row">
+          <input id="entry_date" name="entry_date" type="date" value="{{ today }}" required>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🛣️ KM Readings</div>
+      <div class="field">
+        <label>Opening KM</label>
+        <div class="input-row">
+          <input id="opening" name="opening" type="number" placeholder="e.g. 12340" required>
+          <button type="button" class="mic-btn" data-target="opening" data-type="number" title="Speak">🎤</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Closing KM</label>
+        <div class="input-row">
+          <input id="closing" name="closing" type="number" placeholder="e.g. 12430" required>
+          <button type="button" class="mic-btn" data-target="closing" data-type="number" title="Speak">🎤</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⏰ Duty Timing</div>
+      <div class="field">
+        <label>Start Time</label>
+        <div class="input-row">
+          <input id="start" name="start" type="time" required>
+          <button type="button" class="mic-btn" data-target="start" data-type="time" title="Speak">🎤</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>End Time</label>
+        <div class="input-row">
+          <input id="end" name="end" type="time" required>
+          <button type="button" class="mic-btn" data-target="end" data-type="time" title="Speak">🎤</button>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="save-btn" id="saveBtn">💾 Save Entry</button>
+  </form>
+
+  {% if entry_photo and entry_photo.mode == 'bottom' and entry_photo.url %}
+  <div class="entry-photo-bottom">
+    <img src="{{ entry_photo.url }}?v={{ entry_photo.version|default(0) }}" alt="Brajwasi entry photo">
+  </div>
+  {% endif %}
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <div class="modal-icon">⚠️</div>
+    <div class="modal-title">Entry already filled!<br><small style="font-size:0.85rem">इस तारीख की एंट्री पहले से भरी है!</small></div>
+    <div class="modal-sub">Overwrite it?<br>क्या आप इसे बदलना चाहते हैं?</div>
+    <div class="modal-btns">
+      <button class="btn-confirm" id="confirmYes">✅ Yes / हाँ</button>
+      <button class="btn-cancel"  id="confirmNo">❌ Cancel</button>
     </div>
   </div>
 </div>
 
 <script>
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
-        .then(() => console.log("Service Worker Registered"))
-        .catch(err => console.log("SW registration failed", err));
+const VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";
+
+// ── Notification button + stable push subscribe ───────────────────────────────
+const notifBtn     = document.getElementById('notifBtn');
+const notifTooltip = document.getElementById('notifTooltip');
+
+function urlB64ToUint8Array(b64) {
+  const pad  = '='.repeat((4 - b64.length % 4) % 4);
+  const raw  = atob((b64 + pad).replace(/-/g,'+').replace(/_/g,'/'));
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
 }
 
+function updateNotifUI() {
+  if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    notifBtn.style.display='none';
+    return;
+  }
+  notifBtn.classList.remove('granted','denied');
+  if (Notification.permission === 'granted') {
+    notifBtn.classList.add('granted');
+    notifBtn.textContent = '🔔';
+    notifTooltip.textContent = 'Notifications ON ✓';
+  } else if (Notification.permission === 'denied') {
+    notifBtn.classList.add('denied');
+    notifBtn.textContent = '🔕';
+    notifTooltip.textContent = 'Blocked in browser settings';
+  } else {
+    notifBtn.textContent = '🔔';
+    notifTooltip.textContent = 'Tap to enable notifications';
+  }
+}
+
+async function savePushSubscription() {
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if (!sub) {
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+  }
+  await fetch('/subscribe-push', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(sub.toJSON())
+  });
+}
+
+async function enablePush() {
+  try {
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+      alert('This browser does not support push notifications.');
+      return;
+    }
+    let perm = Notification.permission;
+    if (perm !== 'granted') perm = await Notification.requestPermission();
+    if (perm !== 'granted') { updateNotifUI(); return; }
+    await savePushSubscription();
+    localStorage.setItem('notifAskedOnce', 'yes');
+    updateNotifUI();
+    notifTooltip.textContent = 'Notifications enabled ✓';
+    notifTooltip.classList.add('show');
+    setTimeout(() => notifTooltip.classList.remove('show'), 2500);
+  } catch(e) {
+    console.log('Push error:', e);
+    notifTooltip.textContent = 'Push setup failed';
+    notifTooltip.classList.add('show');
+    setTimeout(() => notifTooltip.classList.remove('show'), 3000);
+    updateNotifUI();
+  }
+}
+
+notifBtn.addEventListener('click', enablePush);
+updateNotifUI();
+
+async function autoAskNotificationOnce() {
+  updateNotifUI();
+
+  if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return;
+  }
+
+  // If already allowed, silently refresh subscription for this driver/car.
+  if (Notification.permission === 'granted') {
+    try { await savePushSubscription(); } catch(e) { console.log('Auto subscription refresh failed:', e); }
+    return;
+  }
+
+  if (Notification.permission === 'denied') {
+    return;
+  }
+
+  // First app open: try automatic browser permission popup once.
+  // Chrome may require a user gesture on some devices; if blocked, we show the bell hint.
+  if (localStorage.getItem('notifAutoAskedOnce') !== 'yes') {
+    localStorage.setItem('notifAutoAskedOnce', 'yes');
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm === 'granted') {
+        await savePushSubscription();
+        updateNotifUI();
+        notifTooltip.textContent = 'Notifications enabled ✓';
+        notifTooltip.classList.add('show');
+        setTimeout(() => notifTooltip.classList.remove('show'), 2500);
+        return;
+      }
+    } catch(e) {
+      console.log('Auto notification permission failed:', e);
+    }
+  }
+
+  // Fallback for browsers that refuse automatic permission prompt.
+  if (Notification.permission === 'default') {
+    notifTooltip.textContent = 'Tap 🔔 to allow notifications';
+    notifTooltip.classList.add('show');
+    setTimeout(() => notifTooltip.classList.remove('show'), 7000);
+  }
+}
+
+window.addEventListener('load', () => {
+  setTimeout(autoAskNotificationOnce, 1200);
+});
+
+// ── Service Worker ───────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js').catch(e => console.log('SW error',e));
+}
+
+// ── PWA Install ──────────────────────────────────────────────────────────────
 let deferredPrompt = null;
 const installBanner = document.getElementById('installBanner');
-const installBtn = document.getElementById('installBtn');
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    installBanner.style.display = 'block';
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  installBanner.style.display = 'block';
 });
-
-installBtn.addEventListener('click', async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-        installBanner.style.display = 'none';
-    }
-    deferredPrompt = null;
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const {outcome} = await deferredPrompt.userChoice;
+  if (outcome==='accepted') installBanner.style.display='none';
+  deferredPrompt = null;
 });
+window.addEventListener('appinstalled', () => { installBanner.style.display='none'; });
 
-window.addEventListener('appinstalled', () => {
-    installBanner.style.display = 'none';
-    deferredPrompt = null;
-});
-
-const form = document.getElementById('entryForm');
-const modal = document.getElementById('confirmModal');
-const dateInput = document.getElementById('entry_date');
+// ── Opening KM auto-fill ─────────────────────────────────────────────────────
+const dateInput   = document.getElementById('entry_date');
 const openingInput = document.getElementById('opening');
-let confirmed = false;
 
-// Fetch last closing KM for selected date and pre-fill opening
 async function fetchLastClosing(dateVal) {
-    if (!dateVal) return;
-    try {
-        const res = await fetch('/get-last-closing', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ entry_date: dateVal })
-        });
-        const data = await res.json();
-        if (data.closing !== null && data.closing !== undefined) {
-            // Only pre-fill if driver hasn't manually typed anything
-            if (!openingInput.dataset.manuallyEdited) {
-                openingInput.value = data.closing;
-                openingInput.placeholder = `Opening KM (last closing: ${data.closing})`;
-            }
-        }
-    } catch(err) {
-        // silently ignore — driver fills manually
+  if (!dateVal || openingInput.dataset.manuallyEdited) return;
+  try {
+    const res  = await fetch('/get-last-closing', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({entry_date: dateVal})
+    });
+    const data = await res.json();
+    if (data.closing != null) {
+      openingInput.value = data.closing;
+      openingInput.classList.add('filled');
+      openingInput.placeholder = `Last closing: ${data.closing}`;
     }
+  } catch(e) {}
 }
-
-// Mark as manually edited if driver types in the field
 openingInput.addEventListener('input', () => {
-    openingInput.dataset.manuallyEdited = 'true';
+  openingInput.dataset.manuallyEdited = 'true';
+  openingInput.classList.toggle('filled', openingInput.value !== '');
 });
-
-// Re-fetch when date changes (and clear manual edit flag)
 dateInput.addEventListener('change', () => {
-    delete openingInput.dataset.manuallyEdited;
-    openingInput.value = '';
-    fetchLastClosing(dateInput.value);
+  delete openingInput.dataset.manuallyEdited;
+  openingInput.value = ''; openingInput.classList.remove('filled');
+  fetchLastClosing(dateInput.value);
 });
-
-// Auto-fill on page load
 fetchLastClosing(dateInput.value);
 
-form.addEventListener('submit', async function(e) {
-    if (confirmed) return;
-    e.preventDefault();
+// ── Voice Input: FREE Google/Chrome Web Speech API ──────────────────────────
+const voiceStatus = document.getElementById('voiceStatus');
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let activeRecognition = null;
+let activeBtn = null;
 
-    const dateVal = document.getElementById('entry_date').value;
-    if (!dateVal) { confirmed = true; form.submit(); return; }
+function showStatus(html) { voiceStatus.className='show'; voiceStatus.innerHTML=html; }
+function hideStatus()     { voiceStatus.className=''; voiceStatus.innerHTML=''; }
 
-    try {
-        const res = await fetch('/check-entry', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ entry_date: dateVal })
-        });
-        const data = await res.json();
-        if (data.filled) {
-            modal.style.display = 'flex';
-        } else {
-            confirmed = true;
-            form.submit();
-        }
-    } catch(err) {
-        confirmed = true;
-        form.submit();
+function normalizeHindiText(text) {
+  return (text || '')
+    .toLowerCase()
+    .replace(/[०-९]/g, d => '०१२३४५६७८९'.indexOf(d))
+    .replace(/[.,]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const digitMap = {
+  '0':'0','zero':'0','jiro':'0','शून्य':'0','सुन्य':'0','जीरो':'0',
+  '1':'1','one':'1','ek':'1','एक':'1',
+  '2':'2','two':'2','do':'2','du':'2','doo':'2','to':'2','दू':'2','दो':'2',
+  '3':'3','three':'3','teen':'3','tin':'3','तीन':'3',
+  '4':'4','four':'4','char':'4','chaar':'4','चार':'4',
+  '5':'5','five':'5','panch':'5','paanch':'5','पांच':'5','पाँच':'5',
+  '6':'6','six':'6','chhe':'6','che':'6','छे':'6','छह':'6',
+  '7':'7','seven':'7','saat':'7','sat':'7','सात':'7',
+  '8':'8','eight':'8','aath':'8','ath':'8','आठ':'8',
+  '9':'9','nine':'9','nau':'9','nav':'9','नौ':'9'
+};
+
+const valueMap = {
+  'zero':0,'jiro':0,'शून्य':0,'सुन्य':0,'जीरो':0,
+  'ek':1,'एक':1,'one':1,
+  'do':2,'du':2,'doo':2,'दू':2,'दो':2,'two':2,
+  'teen':3,'tin':3,'तीन':3,'three':3,
+  'char':4,'chaar':4,'चार':4,'four':4,
+  'panch':5,'paanch':5,'पांच':5,'पाँच':5,'five':5,
+  'chhe':6,'che':6,'छे':6,'छह':6,'six':6,
+  'saat':7,'sat':7,'सात':7,'seven':7,
+  'aath':8,'ath':8,'आठ':8,'eight':8,
+  'nau':9,'nav':9,'नौ':9,'nine':9,
+  'das':10,'दस':10,'gyarah':11,'ग्यारह':11,'barah':12,'बारह':12,'terah':13,'तेरह':13,
+  'chaudah':14,'चौदह':14,'pandrah':15,'पंद्रह':15,'solah':16,'सोलह':16,
+  'satrah':17,'सत्रह':17,'atharah':18,'अठारह':18,'unnis':19,'उन्नीस':19,
+  'bees':20,'बीस':20,'ikkees':21,'इक्कीस':21,'baees':22,'बाईस':22,'teis':23,'तेईस':23,
+  'chaubees':24,'चौबीस':24,'pachchees':25,'पच्चीस':25,'chhabbees':26,'छब्बीस':26,
+  'sattaees':27,'सत्ताईस':27,'athaees':28,'अट्ठाईस':28,'untees':29,'उनतीस':29,
+  'tees':30,'तीस':30,'battees':32,'बत्तीस':32,'chaalees':40,'चालीस':40,
+  'pachaas':50,'पचास':50,'saath':60,'साठ':60,'sattar':70,'सत्तर':70,
+  'assi':80,'अस्सी':80,'nabbe':90,'नब्बे':90,'ninyanve':99,'ninyaanve':99,'निन्यानवे':99
+};
+
+function tokenize(text) {
+  return normalizeHindiText(text).match(/[a-zA-Zअ-ह0-9:]+/g) || [];
+}
+
+function parseDigitChain(tokens) {
+  const filtered = tokens.filter(t => !['km','किलोमीटर','number','नंबर','hai','है'].includes(t));
+  if (filtered.length < 2) return null;
+  const digits = [];
+  for (const t of filtered) {
+    if (/^\d+$/.test(t)) digits.push(t);
+    else if (digitMap[t] !== undefined) digits.push(digitMap[t]);
+    else return null;
+  }
+  return digits.join('');
+}
+
+function parseIndianNumber(tokens) {
+  const multiplierWords = new Set([
+    'sau','soo','so','सो','सौ',
+    'hazaar','hazar','hajaar','हजार','हज़ार',
+    'lakh','laakh','lac','lak','लाख',
+    'crore','karod','करोड़','करोड'
+  ]);
+  if (!tokens.some(t => multiplierWords.has(t))) return null;
+
+  let total = 0;
+  let current = 0;
+  let used = false;
+
+  function tokenValue(t) {
+    if (/^\d+$/.test(t)) return parseInt(t, 10);
+    return valueMap[t];
+  }
+
+  for (const t of tokens) {
+    const v = tokenValue(t);
+    if (v !== undefined && v !== null && !Number.isNaN(v)) {
+      current += v;
+      used = true;
+      continue;
     }
+
+    if (['sau','soo','so','सो','सौ'].includes(t)) {
+      current = (current || 1) * 100;
+      used = true;
+      continue;
+    }
+
+    if (['hazaar','hazar','hajaar','हजार','हज़ार'].includes(t)) {
+      total += (current || 1) * 1000;
+      current = 0;
+      used = true;
+      continue;
+    }
+
+    if (['lakh','laakh','lac','lak','लाख'].includes(t)) {
+      total += (current || 1) * 100000;
+      current = 0;
+      used = true;
+      continue;
+    }
+
+    if (['crore','karod','करोड़','करोड'].includes(t)) {
+      total += (current || 1) * 10000000;
+      current = 0;
+      used = true;
+      continue;
+    }
+  }
+
+  const result = total + current;
+  return used && result > 0 ? String(result) : null;
+}
+
+function parseSpokenTime(tokens, rawText) {
+  let raw = normalizeHindiText(rawText || '');
+  const rawLower = raw.toLowerCase();
+
+  const hasPM =
+    rawLower.includes('pm') || rawLower.includes('p.m') ||
+    rawLower.includes('पीएम') || rawLower.includes('पी एम') ||
+    rawLower.includes('shaam') || rawLower.includes('sham') || rawLower.includes('शाम') ||
+    rawLower.includes('raat') || rawLower.includes('rat') || rawLower.includes('रात') ||
+    rawLower.includes('night');
+
+  const hasAM =
+    rawLower.includes('am') || rawLower.includes('a.m') ||
+    rawLower.includes('एएम') || rawLower.includes('ए एम') ||
+    rawLower.includes('subah') || rawLower.includes('सुबह') ||
+    rawLower.includes('morning') || rawLower.includes('sawere') || rawLower.includes('savere');
+
+  const hasAfternoon =
+    rawLower.includes('dopahar') || rawLower.includes('दोपहर') || rawLower.includes('afternoon');
+
+  const hasTimeWord =
+    hasPM || hasAM || hasAfternoon ||
+    /(baje|बजे|bajkar|बजकर|minute|मिनट|मिनिट|:)/i.test(rawLower);
+
+  if (!hasTimeWord) return null;
+
+  function val(t) {
+    if (/^\d+$/.test(t)) return parseInt(t, 10);
+    return valueMap[t];
+  }
+
+  function applyMeridiem(hour) {
+    let h = hour;
+    // If user says 22 pm or 18 pm, keep it as 24-hour time.
+    if ((hasPM || hasAfternoon) && h >= 1 && h <= 11) h += 12;
+    if (hasAM && h === 12) h = 0;
+    return h;
+  }
+
+  let h = null;
+  let m = 0;
+
+  // Handles: 6:00 pm, 6.00 pm, 6:00, 18:00, and Chrome transcript "6:00 p.m."
+  let colon = rawLower.match(/(\d{1,2})\s*[:.]\s*(\d{1,2})/);
+  if (colon) {
+    h = parseInt(colon[1], 10);
+    m = parseInt(colon[2], 10);
+    h = applyMeridiem(h);
+    if (h > 23 || m > 59) return null;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+
+  // Special Hindi time words.
+  if (rawLower.includes('dhaai') || rawLower.includes('ढाई')) {
+    h = 2;
+    m = 30;
+  }
+
+  const specialIndex = tokens.findIndex(t => ['saade','साढ़े','साडे','sade','paune','पौने','पौन','sawa','सवा'].includes(t));
+  if (specialIndex >= 0 && tokens[specialIndex + 1]) {
+    const next = val(tokens[specialIndex + 1]);
+    if (next != null) {
+      const sp = tokens[specialIndex];
+      if (['saade','साढ़े','साडे','sade'].includes(sp)) { h = next; m = 30; }
+      if (['sawa','सवा'].includes(sp)) { h = next; m = 15; }
+      if (['paune','पौने','पौन'].includes(sp)) { h = next - 1; m = 45; }
+    }
+  }
+
+  // Handles: raat ke 6 baje, 10 pm, shaam 7 baje, subah 8 baje.
+  if (h == null) {
+    for (let i = 0; i < tokens.length; i++) {
+      if (['baje','बजे','bajkar','बजकर'].includes(tokens[i]) && i > 0) {
+        const before = val(tokens[i - 1]);
+        if (before != null) h = before;
+      }
+      if (['minute','मिनट','मिनिट'].includes(tokens[i]) && i > 0) {
+        m = val(tokens[i - 1]) || 0;
+      }
+    }
+  }
+
+  // Handles direct speech: "6 pm", "10 p m", "raat 6".
+  if (h == null) {
+    const firstNum = tokens.map(val).find(v => Number.isInteger(v));
+    if (firstNum != null) h = firstNum;
+  }
+
+  if (h == null) return null;
+
+  h = applyMeridiem(h);
+
+  if (h < 0) h += 12;
+  if (h > 23 || m > 59) return null;
+
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+function parseSpeechText(raw, type) {
+  const tokens = tokenize(raw);
+  if (!tokens.length) return null;
+  if (type === 'time') return parseSpokenTime(tokens, raw);
+
+  // IMPORTANT: multiplier words like lakh/hazaar must be parsed BEFORE digit-chain.
+  // Otherwise "1 lakh 999" may become "1999" instead of "100999".
+  const indian = parseIndianNumber(tokens);
+  if (indian) return indian;
+
+  const digitChain = parseDigitChain(tokens);
+  if (digitChain) return digitChain;
+
+  const numeric = normalizeHindiText(raw).match(/\d+/g);
+  return numeric ? numeric.join('') : null;
+}
+
+function startGoogleVoice(btn) {
+  const targetId = btn.dataset.target;
+  const type = btn.dataset.type;
+  if (!SpeechRecognition) {
+    showStatus('<span class="verror">❌ Chrome voice support नहीं मिला. Chrome/Edge browser use करें.</span>');
+    return;
+  }
+  if (activeRecognition) { activeRecognition.stop(); activeRecognition = null; return; }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'hi-IN';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 3;
+  activeRecognition = recognition; activeBtn = btn;
+  btn.classList.add('recording'); btn.textContent = '🎙️';
+  showStatus('🎙️ <b>Listening...</b> Hindi/Hinglish में बोलें');
+
+  recognition.onresult = (e) => {
+    const candidates = Array.from(e.results[0]).map(r => r.transcript);
+    let parsed = null, raw = candidates[0] || '';
+    for (const txt of candidates) {
+      parsed = parseSpeechText(txt, type);
+      if (parsed) { raw = txt; break; }
+    }
+
+    if (!parsed) {
+      showStatus(`<span class="verror">❌ समझ नहीं आया — दोबारा बोलें</span><br><small class="raw">"${raw}"</small>`);
+      return;
+    }
+
+    const field = document.getElementById(targetId);
+    field.value = parsed;
+    field.classList.add('filled');
+    field.dispatchEvent(new Event('input'));
+    showStatus(`<span class="vresult">✅ ${parsed}</span> &nbsp;<small class="raw">"${raw}"</small>`);
+  };
+
+  recognition.onerror = (e) => {
+    showStatus(`<span class="verror">❌ Voice error: ${e.error}. Mic permission allow करें.</span>`);
+  };
+
+  recognition.onend = () => {
+    if (activeBtn) {
+      activeBtn.classList.remove('recording');
+      activeBtn.classList.add('success');
+      activeBtn.textContent = '🎤';
+      setTimeout(() => { activeBtn && activeBtn.classList.remove('success'); hideStatus(); }, 3000);
+    }
+    activeRecognition = null; activeBtn = null;
+  };
+
+  recognition.start();
+}
+
+document.querySelectorAll('.mic-btn').forEach(btn => {
+  btn.addEventListener('click', () => startGoogleVoice(btn));
 });
 
-document.getElementById('confirmBtn').addEventListener('click', function() {
-    modal.style.display = 'none';
-    confirmed = true;
-    form.submit();
+// ── Form submit ──────────────────────────────────────────────────────────────
+const form    = document.getElementById('entryForm');
+const modal   = document.getElementById('confirmModal');
+const saveBtn = document.getElementById('saveBtn');
+let confirmed = false;
+
+form.addEventListener('submit', async function(e) {
+  if (confirmed) return;
+  e.preventDefault();
+  try {
+    const res  = await fetch('/check-entry', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({entry_date: dateInput.value})
+    });
+    const data = await res.json();
+    if (data.filled) { modal.classList.add('show'); }
+    else { confirmed=true; saveBtn.disabled=true; saveBtn.textContent='⏳ Saving...'; form.submit(); }
+  } catch(e) { confirmed=true; form.submit(); }
 });
 
-document.getElementById('cancelBtn').addEventListener('click', function() {
-    modal.style.display = 'none';
+document.getElementById('confirmYes').addEventListener('click', () => {
+  modal.classList.remove('show'); confirmed=true;
+  saveBtn.disabled=true; saveBtn.textContent='⏳ Saving...'; form.submit();
 });
+document.getElementById('confirmNo').addEventListener('click', () => modal.classList.remove('show'));
 </script>
 </body>
 </html>
